@@ -15,7 +15,7 @@ const config: QuartzConfig = {
       provider: "plausible",
     },
     locale: "en-US",
-    baseUrl: "czino.github.io/inputs-and-outputs",
+    baseUrl: "czino.github.io/inputs-and-outputs-in-an-ecological-design",
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "created",
     theme: {
