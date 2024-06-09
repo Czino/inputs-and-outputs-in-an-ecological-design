@@ -1,17 +1,18 @@
 {
-  "name": "inputs-and-outputs",
+  "name": "inputs-and-outputs-in-an-ecological-design",
   "description": "Inputs and outputs in an ecological system",
   "private": true,
   "version": "4.2.3",
   "type": "module",
   "author": "Czino <czino@czino.de>",
   "license": "MIT",
-  "homepage": "https://czino.github.io/inputs-and-outputs",
+  "homepage": "https://czino.github.io/inputs-and-outputs-in-an-ecological-design",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Czino/inputs-outputs-functions.git"
+    "url": "https://github.com/Czino/inputs-and-outputs-in-an-ecological-design.git"
   },
   "scripts": {
+    "quartz": "./quartz/bootstrap-cli.mjs",
     "build": "npx quartz build",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
