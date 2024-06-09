@@ -1,0 +1,1 @@
+To build the HTML version read the documentation and get started: https://quartz.jzhao.xyz/
