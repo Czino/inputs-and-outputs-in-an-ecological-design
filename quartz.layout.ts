@@ -1,5 +1,6 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
+import { defaultOptions } from "./quartz/components/Graph"
 
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
@@ -29,7 +30,13 @@ export const defaultContentPageLayout: PageLayout = {
     Component.DesktopOnly(Component.Explorer()),
   ],
   right: [
-    Component.Graph(),
+    Component.Graph({
+      ...defaultOptions,
+      localGraph: {
+        ...defaultOptions.localGraph,
+        depth: 2
+      }
+    }),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
   ],
