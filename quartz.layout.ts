@@ -10,6 +10,7 @@ export const sharedPageComponents: SharedLayout = {
     links: {
       GitHub: "https://github.com/Czino/inputs-outputs-functions",
       Permies: "https://permies.com/forums",
+      Patreon: "https://patreon.com/designelements",
     },
   }),
 }
