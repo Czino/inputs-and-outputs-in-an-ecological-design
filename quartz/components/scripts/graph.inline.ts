@@ -1,7 +1,7 @@
-import type { ContentDetails, ContentIndex } from "../../plugins/emitters/contentIndex"
 import * as d3 from "d3"
-import { registerEscapeHandler, removeAllChildren } from "./util"
+import type { ContentDetails } from "../../plugins/emitters/contentIndex"
 import { FullSlug, SimpleSlug, getFullSlug, resolveRelative, simplifySlug } from "../../util/path"
+import { registerEscapeHandler, removeAllChildren } from "./util"
 
 type NodeData = {
   id: SimpleSlug
@@ -43,6 +43,7 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
     fontSize,
     opacityScale,
     removeTags,
+    hideWithTags,
     showTags,
     focusOnHover,
   } = JSON.parse(graph.dataset["cfg"]!)
@@ -89,6 +90,9 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
         depth--
         wl.push("__SENTINEL")
       } else {
+        const tags = data.get(cur)?.tags ?? []
+        if (tags.some(tag => hideWithTags.includes(tag))) continue
+
         neighbourhood.add(cur)
         const outgoing = links.filter((l) => l.source === cur)
         const incoming = links.filter((l) => l.target === cur)

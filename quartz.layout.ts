@@ -35,12 +35,10 @@ export const defaultContentPageLayout: PageLayout = {
       ...defaultOptions,
       localGraph: {
         ...defaultOptions.localGraph,
-        depth: 2
+        depth: 2,
+        showTags: false,
+        hideWithTags: ['source']
       },
-      globalGraph: {
-        ...defaultOptions.globalGraph,
-        removeTags: ['source']
-      }
     }),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
