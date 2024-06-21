@@ -36,6 +36,10 @@ export const defaultContentPageLayout: PageLayout = {
       localGraph: {
         ...defaultOptions.localGraph,
         depth: 2
+      },
+      globalGraph: {
+        ...defaultOptions.globalGraph,
+        removeTags: ['source']
       }
     }),
     Component.DesktopOnly(Component.TableOfContents()),
