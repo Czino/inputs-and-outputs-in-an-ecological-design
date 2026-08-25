@@ -21,10 +21,31 @@
     flex: 1 1 16rem;
     min-width: 14rem;
 
-    & > label {
-      display: block;
-      font-weight: $boldWeight;
+    & > .compare-picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 0.3rem;
+
+      & > label {
+        font-weight: $boldWeight;
+      }
+
+      & > .compare-remove {
+        background: transparent;
+        border: none;
+        color: var(--darkgray);
+        font-size: 1.2em;
+        line-height: 1;
+        padding: 0 0.25rem;
+        cursor: pointer;
+
+        &:hover,
+        &:focus {
+          color: var(--tertiary);
+          outline: none;
+        }
+      }
     }
 
     & > input {
@@ -87,8 +108,26 @@
     }
   }
 
+  & .compare-add {
+    display: inline-block;
+    padding: 0.4em 0.9em;
+    font-family: var(--bodyFont);
+    font-size: 0.95em;
+    color: var(--dark);
+    background: var(--lightgray);
+    border: 1px solid var(--lightgray);
+    border-radius: 5px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+      background: var(--highlight);
+      outline: none;
+    }
+  }
+
   & #compare-results {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
   }
 
   & .compare-section {

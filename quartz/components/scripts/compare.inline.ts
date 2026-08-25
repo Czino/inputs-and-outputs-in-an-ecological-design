@@ -2,8 +2,9 @@ import { ContentDetails } from "../../plugins/emitters/contentIndex"
 import { FullSlug, SimpleSlug, resolveRelative, simplifySlug } from "../../util/path"
 import { removeAllChildren } from "./util"
 
-type Side = "a" | "b"
 type LinkItem = { href: string; title: string }
+
+const MIN_PICKERS = 2
 
 document.addEventListener("nav", async () => {
   const root = document.getElementById("compare-container")
@@ -26,9 +27,15 @@ document.addEventListener("nav", async () => {
   }
   const byTitle = (x: LinkItem, y: LinkItem) => x.title.localeCompare(y.title)
 
-  const selected: Partial<Record<Side, FullSlug>> = {}
+  const pickersContainer = document.getElementById("compare-pickers")
+  const addButton = document.getElementById("compare-add-picker")
+  const results = document.getElementById("compare-results")
+  if (!pickersContainer || !addButton || !results) return
 
-  function renderList(container: HTMLElement, heading: string, items: LinkItem[]) {
+  // one slot per picker; undefined means that picker has no note selected yet
+  let selections: (FullSlug | undefined)[] = [undefined, undefined]
+
+  function renderSection(heading: string, items: LinkItem[]) {
     const section = document.createElement("div")
     section.classList.add("compare-section")
 
@@ -66,71 +73,67 @@ document.addEventListener("nav", async () => {
       section.appendChild(ul)
     }
 
-    container.appendChild(section)
+    results!.appendChild(section)
   }
 
   function renderResults() {
-    const results = document.getElementById("compare-results")
-    if (!results) return
-    removeAllChildren(results)
+    removeAllChildren(results!)
 
-    const { a, b } = selected
-    if (!a || !b) return
+    const filled = selections.filter((s): s is FullSlug => Boolean(s))
+    if (filled.length < MIN_PICKERS) return
 
-    if (a === b) {
+    const chosen = [...new Set(filled)]
+    if (chosen.length < MIN_PICKERS) {
       const p = document.createElement("p")
       p.classList.add("compare-empty")
-      p.textContent = "Pick two different notes to compare."
-      results.appendChild(p)
+      p.textContent = "Pick different notes to compare."
+      results!.appendChild(p)
       return
     }
 
-    const detailsA = data[a]
-    const detailsB = data[b]
-    const simpleA = simplifySlug(a)
-    const simpleB = simplifySlug(b)
-
-    const linksB = new Set(detailsB.links ?? [])
-    const sharedLinks = (detailsA.links ?? [])
-      .filter((l) => l !== simpleA && l !== simpleB && linksB.has(l))
+    const simples = chosen.map(simplifySlug)
+    const linkSets = chosen.map((slug) => new Set(data[slug].links ?? []))
+    const sharedLinks = [...linkSets[0]]
+      .filter((l) => !simples.includes(l))
+      .filter((l) => linkSets.every((set) => set.has(l)))
       .map(toLinkItem)
       .sort(byTitle)
 
     const sharedBacklinks = entries
-      .filter(({ slug }) => slug !== a && slug !== b)
+      .filter(({ slug }) => !chosen.includes(slug))
       .filter(({ slug }) => {
         const links = data[slug].links ?? []
-        return links.includes(simpleA) && links.includes(simpleB)
+        return simples.every((s) => links.includes(s))
       })
       .map(({ slug }) => ({ href: resolveRelative(currentSlug, slug), title: titleOf(slug) }))
       .sort(byTitle)
 
-    const tagsA = new Set(detailsA.tags ?? [])
-    const sharedTags = (detailsB.tags ?? [])
-      .filter((t) => tagsA.has(t))
+    const tagSets = chosen.map((slug) => new Set(data[slug].tags ?? []))
+    const sharedTags = (tagSets[0] ? [...tagSets[0]] : [])
+      .filter((t) => tagSets.every((set) => set.has(t)))
       .sort((x, y) => x.localeCompare(y))
       .map((t) => ({ href: "", title: `#${t}` }))
 
-    renderList(results, "Notes both link to", sharedLinks)
-    renderList(results, "Notes that link to both", sharedBacklinks)
-    renderList(results, "Shared tags", sharedTags)
+    const linkHeading = chosen.length === 2 ? "Notes both link to" : "Notes all link to"
+    const backlinkHeading =
+      chosen.length === 2 ? "Notes that link to both" : "Notes that link to all of them"
+
+    renderSection(linkHeading, sharedLinks)
+    renderSection(backlinkHeading, sharedBacklinks)
+    renderSection("Shared tags", sharedTags)
   }
 
-  function setupPicker(side: Side) {
-    const input = document.getElementById(`compare-input-${side}`) as HTMLInputElement | null
-    const suggestions = document.getElementById(`compare-suggestions-${side}`)
-    if (!input || !suggestions) return
-
+  function setupPickerInput(index: number, input: HTMLInputElement, suggestions: HTMLElement) {
     function hideSuggestions() {
-      removeAllChildren(suggestions!)
-      suggestions!.classList.remove("active")
+      removeAllChildren(suggestions)
+      suggestions.classList.remove("active")
     }
 
     function onInput() {
-      selected[side] = undefined
+      selections[index] = undefined
       renderResults()
 
-      const query = input!.value.trim().toLowerCase()
+      const query = input.value.trim().toLowerCase()
       hideSuggestions()
       if (query === "") return
 
@@ -143,14 +146,14 @@ document.addEventListener("nav", async () => {
         item.classList.add("compare-suggestion")
         item.textContent = match.title
         item.addEventListener("click", () => {
-          input!.value = match.title
-          selected[side] = match.slug
+          input.value = match.title
+          selections[index] = match.slug
           hideSuggestions()
           renderResults()
         })
-        suggestions!.appendChild(item)
+        suggestions.appendChild(item)
       }
-      suggestions!.classList.add("active")
+      suggestions.classList.add("active")
     }
 
     function onBlur() {
@@ -163,7 +166,67 @@ document.addEventListener("nav", async () => {
     window.addCleanup(() => input.removeEventListener("blur", onBlur))
   }
 
-  setupPicker("a")
-  setupPicker("b")
+  function renderPickers() {
+    removeAllChildren(pickersContainer!)
+
+    selections.forEach((selectedSlug, index) => {
+      const picker = document.createElement("div")
+      picker.classList.add("compare-picker")
+
+      const header = document.createElement("div")
+      header.classList.add("compare-picker-header")
+
+      const label = document.createElement("label")
+      label.setAttribute("for", `compare-input-${index}`)
+      label.textContent = `Note ${index + 1}`
+      header.appendChild(label)
+
+      if (selections.length > MIN_PICKERS) {
+        const removeBtn = document.createElement("button")
+        removeBtn.type = "button"
+        removeBtn.classList.add("compare-remove")
+        removeBtn.setAttribute("aria-label", `Remove note ${index + 1}`)
+        removeBtn.textContent = "×"
+        removeBtn.addEventListener("click", () => {
+          selections.splice(index, 1)
+          renderPickers()
+          renderResults()
+        })
+        header.appendChild(removeBtn)
+      }
+
+      picker.appendChild(header)
+
+      const input = document.createElement("input")
+      input.type = "text"
+      input.autocomplete = "off"
+      input.id = `compare-input-${index}`
+      input.placeholder = "Search for a note..."
+      if (selectedSlug) input.value = titleOf(selectedSlug)
+      picker.appendChild(input)
+
+      const suggestions = document.createElement("div")
+      suggestions.classList.add("compare-suggestions")
+      suggestions.id = `compare-suggestions-${index}`
+      picker.appendChild(suggestions)
+
+      pickersContainer!.appendChild(picker)
+      setupPickerInput(index, input, suggestions)
+    })
+  }
+
+  function onAddPicker() {
+    selections.push(undefined)
+    renderPickers()
+    const lastInput = document.getElementById(
+      `compare-input-${selections.length - 1}`,
+    ) as HTMLInputElement | null
+    lastInput?.focus()
+  }
+
+  addButton.addEventListener("click", onAddPicker)
+  window.addCleanup(() => addButton.removeEventListener("click", onAddPicker))
+
+  renderPickers()
   renderResults()
 })

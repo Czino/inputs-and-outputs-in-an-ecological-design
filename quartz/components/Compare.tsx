@@ -7,31 +7,13 @@ const Compare: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
   return (
     <div id="compare-container" class="compare-page popover-hint" data-slug={fileData.slug}>
       <p class="compare-intro">
-        Pick two notes to see what they have in common: notes they both link to, notes that link
-        to both of them, and shared tags.
+        Pick two or more notes to see what they have in common: notes they all link to, notes
+        that link to all of them, and shared tags.
       </p>
-      <div class="compare-pickers">
-        <div class="compare-picker">
-          <label for="compare-input-a">Note A</label>
-          <input
-            autocomplete="off"
-            id="compare-input-a"
-            type="text"
-            placeholder="Search for a note..."
-          />
-          <div class="compare-suggestions" id="compare-suggestions-a"></div>
-        </div>
-        <div class="compare-picker">
-          <label for="compare-input-b">Note B</label>
-          <input
-            autocomplete="off"
-            id="compare-input-b"
-            type="text"
-            placeholder="Search for a note..."
-          />
-          <div class="compare-suggestions" id="compare-suggestions-b"></div>
-        </div>
-      </div>
+      <div class="compare-pickers" id="compare-pickers"></div>
+      <button type="button" id="compare-add-picker" class="compare-add">
+        + Add another note
+      </button>
       <div id="compare-results"></div>
     </div>
   )
