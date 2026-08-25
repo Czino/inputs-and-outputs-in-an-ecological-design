@@ -29,11 +29,31 @@ document.addEventListener("nav", async () => {
 
   const pickersContainer = document.getElementById("compare-pickers")
   const addButton = document.getElementById("compare-add-picker")
+  const resetButton = document.getElementById("compare-reset")
   const results = document.getElementById("compare-results")
-  if (!pickersContainer || !addButton || !results) return
+  if (!pickersContainer || !addButton || !resetButton || !results) return
+
+  function readSelectionsFromUrl(): (FullSlug | undefined)[] {
+    const slugs = new URLSearchParams(window.location.search)
+      .getAll("note")
+      .filter((slug) => Object.prototype.hasOwnProperty.call(data, slug)) as FullSlug[]
+    return slugs.length >= MIN_PICKERS
+      ? slugs
+      : [...slugs, ...Array(MIN_PICKERS - slugs.length).fill(undefined)]
+  }
+
+  function updateUrl() {
+    const params = new URLSearchParams()
+    for (const slug of selections) {
+      if (slug) params.append("note", slug)
+    }
+    const query = params.toString()
+    const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`
+    history.replaceState(null, "", url)
+  }
 
   // one slot per picker; undefined means that picker has no note selected yet
-  let selections: (FullSlug | undefined)[] = [undefined, undefined]
+  let selections: (FullSlug | undefined)[] = readSelectionsFromUrl()
 
   function renderSection(heading: string, items: LinkItem[]) {
     const section = document.createElement("div")
@@ -77,6 +97,7 @@ document.addEventListener("nav", async () => {
   }
 
   function renderResults() {
+    updateUrl()
     removeAllChildren(results!)
 
     const filled = selections.filter((s): s is FullSlug => Boolean(s))
@@ -224,8 +245,16 @@ document.addEventListener("nav", async () => {
     lastInput?.focus()
   }
 
+  function onReset() {
+    selections = Array(MIN_PICKERS).fill(undefined)
+    renderPickers()
+    renderResults()
+  }
+
   addButton.addEventListener("click", onAddPicker)
   window.addCleanup(() => addButton.removeEventListener("click", onAddPicker))
+  resetButton.addEventListener("click", onReset)
+  window.addCleanup(() => resetButton.removeEventListener("click", onReset))
 
   renderPickers()
   renderResults()

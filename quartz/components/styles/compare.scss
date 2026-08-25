@@ -108,6 +108,12 @@
     }
   }
 
+  & .compare-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   & .compare-add {
     display: inline-block;
     padding: 0.4em 0.9em;
@@ -122,6 +128,32 @@
     &:hover,
     &:focus {
       background: var(--highlight);
+      outline: none;
+    }
+  }
+
+  & .compare-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: var(--darkgray);
+    background: transparent;
+    border: 1px solid var(--lightgray);
+    border-radius: 5px;
+    cursor: pointer;
+
+    & > svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover,
+    &:focus {
+      color: var(--tertiary);
+      border-color: var(--tertiary);
       outline: none;
     }
   }
