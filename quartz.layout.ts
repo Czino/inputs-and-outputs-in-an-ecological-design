@@ -8,6 +8,7 @@ export const sharedPageComponents: SharedLayout = {
   header: [],
   footer: Component.Footer({
     links: {
+      "Compare notes": "/compare",
       GitHub: "https://github.com/Czino/inputs-outputs-functions",
       Permies: "https://permies.com/forums",
       Patreon: "https://patreon.com/designelements",
