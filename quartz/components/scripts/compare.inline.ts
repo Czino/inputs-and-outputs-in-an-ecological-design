@@ -27,6 +27,32 @@ document.addEventListener("nav", async () => {
   }
   const byTitle = (x: LinkItem, y: LinkItem) => x.title.localeCompare(y.title)
 
+  // lower is a better match: exact title, then title prefix, then word prefix, then substring
+  function matchRank(title: string, query: string): number {
+    const t = title.toLowerCase()
+    if (t === query) return 0
+    if (t.startsWith(query)) return 1
+    if (t.split(/\s+/).some((word) => word.startsWith(query))) return 2
+    if (t.includes(query)) return 3
+    return -1
+  }
+
+  function rankedMatches(query: string) {
+    const q = query.toLowerCase()
+    return entries
+      .map((e) => ({ e, rank: matchRank(e.title, q) }))
+      .filter(({ rank }) => rank >= 0)
+      .sort((a, b) => a.rank - b.rank || a.e.title.localeCompare(b.e.title))
+      .slice(0, 8)
+      .map(({ e }) => e)
+  }
+
+  function findExactMatch(query: string) {
+    const q = query.trim().toLowerCase()
+    if (!q) return undefined
+    return entries.find((e) => e.title.toLowerCase() === q)
+  }
+
   const pickersContainer = document.getElementById("compare-pickers")
   const addButton = document.getElementById("compare-add-picker")
   const resetButton = document.getElementById("compare-reset")
@@ -150,15 +176,31 @@ document.addEventListener("nav", async () => {
       suggestions.classList.remove("active")
     }
 
+    function selectMatch(match: { slug: FullSlug; title: string }) {
+      input.value = match.title
+      selections[index] = match.slug
+      hideSuggestions()
+      renderResults()
+    }
+
+    // lets the user commit whatever they typed without clicking a suggestion,
+    // as long as it's an exact (case-insensitive) title match
+    function commitExactMatch(): boolean {
+      const match = findExactMatch(input.value)
+      if (!match) return false
+      selectMatch(match)
+      return true
+    }
+
     function onInput() {
       selections[index] = undefined
       renderResults()
 
-      const query = input.value.trim().toLowerCase()
+      const query = input.value.trim()
       hideSuggestions()
       if (query === "") return
 
-      const matches = entries.filter((e) => e.title.toLowerCase().includes(query)).slice(0, 8)
+      const matches = rankedMatches(query)
       if (matches.length === 0) return
 
       for (const match of matches) {
@@ -166,23 +208,29 @@ document.addEventListener("nav", async () => {
         item.type = "button"
         item.classList.add("compare-suggestion")
         item.textContent = match.title
-        item.addEventListener("click", () => {
-          input.value = match.title
-          selections[index] = match.slug
-          hideSuggestions()
-          renderResults()
-        })
+        item.addEventListener("click", () => selectMatch(match))
         suggestions.appendChild(item)
       }
       suggestions.classList.add("active")
     }
 
+    function onKeydown(e: KeyboardEvent) {
+      if (e.key !== "Enter") return
+      e.preventDefault()
+      if (commitExactMatch()) return
+      const firstSuggestion = suggestions.querySelector(".compare-suggestion") as HTMLElement | null
+      firstSuggestion?.click()
+    }
+
     function onBlur() {
+      commitExactMatch()
       setTimeout(hideSuggestions, 150)
     }
 
     input.addEventListener("input", onInput)
     window.addCleanup(() => input.removeEventListener("input", onInput))
+    input.addEventListener("keydown", onKeydown)
+    window.addCleanup(() => input.removeEventListener("keydown", onKeydown))
     input.addEventListener("blur", onBlur)
     window.addCleanup(() => input.removeEventListener("blur", onBlur))
   }
