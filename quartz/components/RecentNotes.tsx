@@ -1,9 +1,8 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { FullSlug, SimpleSlug, resolveRelative } from "../util/path"
 import { QuartzPluginData } from "../plugins/vfile"
-import { byDateAndAlphabetical } from "./PageList"
+import { alphabetical } from "./PageList"
 import style from "./styles/recentNotes.scss"
-import { Date, getDate } from "./Date"
 import { GlobalConfiguration } from "../cfg"
 import { i18n } from "../i18n"
 import { classNames } from "../util/lang"
@@ -17,12 +16,12 @@ interface Options {
   sort: (f1: QuartzPluginData, f2: QuartzPluginData) => number
 }
 
-const defaultOptions = (cfg: GlobalConfiguration): Options => ({
+const defaultOptions = (_cfg: GlobalConfiguration): Options => ({
   limit: 3,
   linkToMore: false,
   showTags: true,
   filter: () => true,
-  sort: byDateAndAlphabetical(cfg),
+  sort: alphabetical(),
 })
 
 export default ((userOpts?: Partial<Options>) => {
@@ -53,11 +52,6 @@ export default ((userOpts?: Partial<Options>) => {
                       </a>
                     </h3>
                   </div>
-                  {page.dates && (
-                    <p class="meta">
-                      <Date date={getDate(cfg, page)!} locale={cfg.locale} />
-                    </p>
-                  )}
                   {opts.showTags && (
                     <ul class="tags">
                       {tags.map((tag) => (
