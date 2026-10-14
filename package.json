@@ -13,6 +13,7 @@
   },
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
+    "dev": "npx quartz build --serve",
     "build": "npx quartz build",
     "update": "cd content && git pull && cd .. && git add . && git commit -m \"Update content\"",
     "check": "tsc --noEmit && npx prettier . --check",
