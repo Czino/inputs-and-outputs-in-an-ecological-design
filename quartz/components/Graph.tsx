@@ -9,6 +9,8 @@ export interface D3Config {
   drag: boolean
   zoom: boolean
   depth: number
+  maxDepth?: number
+  depthExpansionThreshold?: number
   scale: number
   repelForce: number
   centerForce: number

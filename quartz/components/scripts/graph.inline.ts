@@ -36,6 +36,8 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
     drag: enableDrag,
     zoom: enableZoom,
     depth,
+    maxDepth,
+    depthExpansionThreshold,
     scale,
     repelForce,
     centerForce,
@@ -47,6 +49,9 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
     showTags,
     focusOnHover,
   } = JSON.parse(graph.dataset["cfg"]!)
+
+  maxDepth = maxDepth ?? depth
+  depthExpansionThreshold = depthExpansionThreshold ?? Infinity
 
   const data: Map<SimpleSlug, ContentDetails> = new Map(
     Object.entries<ContentDetails>(await fetchData).map(([k, v]) => [
@@ -82,12 +87,20 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
 
   const neighbourhood = new Set<SimpleSlug>()
   const wl: (SimpleSlug | "__SENTINEL")[] = [slug, "__SENTINEL"]
-  if (depth >= 0) {
-    while (depth >= 0 && wl.length > 0) {
+  // snapshot of the neighbourhood after expanding to each depth level, so we can
+  // pick the deepest one that doesn't exceed depthExpansionThreshold
+  const snapshotsByDepth = new Map<number, Set<SimpleSlug>>()
+  const traverseDepth = Math.max(depth, maxDepth)
+  if (traverseDepth >= 0) {
+    let remaining = traverseDepth
+    let level = 0
+    while (remaining >= 0 && wl.length > 0) {
       // compute neighbours
       const cur = wl.shift()!
       if (cur === "__SENTINEL") {
-        depth--
+        snapshotsByDepth.set(level, new Set(neighbourhood))
+        level++
+        remaining--
         wl.push("__SENTINEL")
       } else {
         const tags = data.get(cur)?.tags ?? []
@@ -99,6 +112,18 @@ async function renderGraph(container: string, fullSlug: FullSlug) {
         wl.push(...outgoing.map((l) => l.target), ...incoming.map((l) => l.source))
       }
     }
+    snapshotsByDepth.set(level, new Set(neighbourhood))
+
+    let chosen = snapshotsByDepth.get(depth) ?? neighbourhood
+    for (let d = maxDepth; d > depth; d--) {
+      const snapshot = snapshotsByDepth.get(d)
+      if (snapshot && snapshot.size <= depthExpansionThreshold) {
+        chosen = snapshot
+        break
+      }
+    }
+    neighbourhood.clear()
+    chosen.forEach((id) => neighbourhood.add(id))
   } else {
     validLinks.forEach((id) => neighbourhood.add(id))
     if (showTags) tags.forEach((tag) => neighbourhood.add(tag))

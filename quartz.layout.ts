@@ -36,7 +36,9 @@ export const defaultContentPageLayout: PageLayout = {
       ...defaultOptions,
       localGraph: {
         ...defaultOptions.localGraph,
-        depth: 2,
+        depth: 1,
+        maxDepth: 2,
+        depthExpansionThreshold: 60,
         showTags: false,
         hideWithTags: ["source"],
       },
